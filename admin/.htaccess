@@ -1,0 +1,4 @@
+AuthUserFile 'C:\xampp\htdocs\PHP\boutique\admin\.htpasswd'
+AuthName "Page d'administration protegee, veuillez vous identifier"
+AuthType Basic
+Require valid-user
