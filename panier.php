@@ -17,9 +17,12 @@ if(isset($_GET['action']) && $_GET['action'] == "vider") {
 
 //--------------- PAIEMENT DU PANIER --------------//
 if(isset($_POST['payer'])) {
+	echo 'payer';
 	for($i = 0; $i < count($_SESSION['panier']['id_produit']); $i++) {
 		$resultat = $pdo->prepare("SELECT * FROM produit WHERE id_produit = :id_produit");
-		$resultat->execute(array(':id_produit' => $_SESSION['panier']['id_produit'][$i]));
+		$resultat->execute(array(
+			':id_produit' => $_SESSION['panier']['id_produit'][$i]
+		));
 		$produit = $resultat->fetch(PDO::FETCH_ASSOC);
 		if($produit['stock'] < $_SESSION['panier']['quantite'][$i]) {
 			if($produit['stock'] > 0) { // encore un peu de stock
@@ -30,15 +33,16 @@ if(isset($_POST['payer'])) {
 				retireProduitPanier($_SESSION['panier']['id_produit'][$i]);
 				$i--;
 			}
+      	$erreur = true;
 		}
-		$erreur = true;
+
 	}
 	if(!isset($erreur)) {
-		$r = $pdo->prepare("INSERT INTO commande (id_membre, montant, date_enregistrement) VALUES (:id_membre, :montant, :date_enr)");
+		$r = $pdo->prepare("INSERT INTO commande (id_membre, montant, date_enregistrement) VALUES (:id_membre, :montant, NOW())");
 		$r->execute(array(
 			':id_membre' => $_SESSION['membre']['id_membre'],
-			':montant' => montantTotal(),
-			':date_enr' => NOW()
+			':montant' => montantTotal()
+
 		));
 		$id_commande = $pdo->lastInsertId();
 		for($i = 0; $i < count($_SESSION['panier']['id_produit']); $i++) {
@@ -84,7 +88,7 @@ if(empty($_SESSION['panier']['id_produit'])) { // si le panier est vide
 		$content .= '<td><a href="?action=suppression&id_produit=' . $_SESSION['panier']['id_produit'][$i] . '" onClick="return(confirm(\'En êtes vous certain ?\'))"><span class="glyphicon glyphicon-trash"></span></a></td>';
 		$content .= '</tr>';
 	}
-	$content .= '<tr><th colspan="6">Montant total de vos achats&nbsp;:' . montantTotal() . '€</th></tr>';
+	$content .= '<tr><th colspan="6">Montant total de vos achats&nbsp;:&nbsp;' . montantTotal() . '€</th></tr>';
 	if(internauteEstConnecte()) {
 		$content .= '<form method="post" action="">';
 		$content .= '<tr><td colspan="6"><input type="submit" name="payer" value="Valider le paiement" class="btn btn-default"></td></tr>';
@@ -92,6 +96,7 @@ if(empty($_SESSION['panier']['id_produit'])) { // si le panier est vide
 	} else {
 		$content .= '<tr><td colspan="6">Veuillez vous <a href="inscription.php">inscrire</a> ou vous <a href="connexion.php">connecter</a> afin de pouvoir payer</td></tr>';
 	}
+	$content .= "<tr><td colspan='6'><a href='?action=vider'>Vider mon panier</a></td></tr>";
 }
 $content .= '</table>';
 $content .= '<i>Réglement par CHÈQUE uniquement à l\'adresse suivante : <a href="https://www.google.com.br/maps/search/aston/@48.8301586,2.287713,12z/data=!3m1!4b1" target="_blank">19-21 Rue du 8 Mai 1945, 94110 Arcueil.</a></i><br>';
